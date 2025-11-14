@@ -58,7 +58,6 @@ function DataContext({ children }) {
 
       setFoodie(food_image);
     } catch (error) {
-      console.error("Error fetching service data:", error);
       alert("Backend waking up… please try again.");
     } finally {
       setLoader(false);
@@ -69,14 +68,15 @@ function DataContext({ children }) {
     try {
       setLoader(true);
 
-      const res = await axiosInstance.get("/api/v1/shows/all-reviews");
+      const res = await fetchWithRetry(() =>
+        axiosInstance.get("/api/v1/shows/all-reviews")
+      );
 
       console.log("All reviews === ", res.data);
-
       setAllReviews(res.data.data);
     } catch (error) {
       console.error("Error fetching service data:", error);
-      alert(error.message);
+      alert("Backend waking up… please try again.");
     } finally {
       setLoader(false);
     }
@@ -86,14 +86,18 @@ function DataContext({ children }) {
     try {
       setLoader(true);
 
-      const res1 = await axiosInstance.get("/api/v1/home-data");
+      const res1 = await fetchWithRetry(() =>
+        axiosInstance.get("/api/v1/home-data")
+      );
       setLimitedReviewsData(res1.data.data);
 
-      const res2 = await axiosInstance.get("/api/v1/home-others-data");
+      const res2 = await fetchWithRetry(() =>
+        axiosInstance.get("/api/v1/home-others-data")
+      );
       setUsersFeedback(res2.data.usersFeedback);
     } catch (error) {
       console.error("Error fetching service data:", error);
-      alert(error.message);
+      alert("Backend waking up… please try again.");
     } finally {
       setLoader(false);
     }
@@ -103,14 +107,18 @@ function DataContext({ children }) {
     try {
       setLoader(true);
 
-      const res1 = await axiosInstance.get("/api/v1/home-data");
+      const res1 = await fetchWithRetry(() =>
+        axiosInstance.get("/api/v1/home-data")
+      );
       setLimitedReviewsData(res1.data.data);
 
-      const res2 = await axiosInstance.get("/api/v1/home-others-data");
+      const res2 = await fetchWithRetry(() =>
+        axiosInstance.get("/api/v1/home-others-data")
+      );
       setUsersFeedback(res2.data.usersFeedback);
     } catch (error) {
       console.error("Error fetching service data:", error);
-      alert(error.message);
+      alert("Backend waking up… please try again.");
     } finally {
       setLoader(false);
     }
