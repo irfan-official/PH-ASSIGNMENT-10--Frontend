@@ -32,7 +32,7 @@ function ReviewCard({
     let str = "";
     let remainsStr = "";
     for (let i = 0, lim = text.length; i < lim; i++) {
-      if (i < 45) {
+      if (i < 40) {
         str += text[i];
       } else {
         remainsStr += text[i];

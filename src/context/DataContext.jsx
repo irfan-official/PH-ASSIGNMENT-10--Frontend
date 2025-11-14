@@ -9,7 +9,7 @@ import {
 import useAxiosSecure from "../hooks/useAxiosSecure.jsx";
 import useAxios from "../hooks/useAxios.jsx";
 import { Auth_Context } from "./AuthContext.jsx";
-
+import food_image from "../lib/food_image.js";
 export const Data_Context = createContext();
 
 function DataContext({ children }) {
@@ -39,10 +39,7 @@ function DataContext({ children }) {
       setUsersFeedback(res2.data.usersFeedback);
       setTopReviewers(res2.data.topReviewers);
 
-      const res3 = await fetch("/foodie_peoples.json");
-      if (!res3.ok) throw new Error("Failed to load data");
-      const data = await res3.json();
-      setFoodie(data);
+      setFoodie(food_image);
       setLoader(false);
     } catch (error) {
       console.error("Error fetching service data:", error);
