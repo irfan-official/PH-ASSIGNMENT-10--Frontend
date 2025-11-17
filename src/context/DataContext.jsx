@@ -24,6 +24,7 @@ export async function fetchWithRetry(apiCall, retries = 7, delay = 1000) {
   }
 }
 
+
 function DataContext({ children }) {
   let { user, loading } = useContext(Auth_Context);
 
