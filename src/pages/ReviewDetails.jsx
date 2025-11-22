@@ -7,22 +7,92 @@ import Page404 from "./Page404.jsx";
 import ClientComment from "../components/ClintComment.jsx";
 import { BsFillChatRightTextFill } from "react-icons/bs";
 import { Data_Context } from "../context/DataContext.jsx";
+import { Auth_Context } from "../context/AuthContext.jsx";
 import Rating from "../components/Rating.jsx";
 import NoServiceFound from "./NoServiceFound.jsx";
 import { LiaCommentSolid } from "react-icons/lia";
 import { BsEmojiLaughing } from "react-icons/bs";
+import useAxiosSecure from "../hooks/useAxiosSecure.jsx";
+import { fetchWithRetry } from "../context/DataContext.jsx";
 
 function ReviewDetails() {
   const { id } = useParams();
 
+  const { user } = useContext(Auth_Context);
+
   // const { apps, setApps, totalApps, setTotalApps } = useContext(UserContext);
 
   const [selectedApp, setSelectedApp] = useState({});
-  const [excedID, setExcedID] = useState(false);
+  const [exceedID, setExceedID] = useState(false);
   const [checkReview, setCheckReview] = useState(null);
   const [clickComment, setClickComment] = useState(false);
+  const [fetchCommentsLoader, setFetchCommentsLoader] = useState(false);
+  const [createCommentsLoader, setCreateCommentsLoader] = useState(false);
+  const [comment, setComment] = useState("");
+  const [allComments, setAllComments] = useState([
+    // {
+    //   image:
+    //     "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bW9kZWx8ZW58MHx8MHx8fDA%3D",
+    //   name: "test",
+    //   time: "1/1/2002",
+    //   comment:
+    //     "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aut optio hic eum est expedita dolore provident dignissimos tempora sint voluptatum.",
+    // },
+  ]);
 
   let { allReviews, loader } = useContext(Data_Context);
+
+  const axiosSecureInstance = useAxiosSecure();
+
+  async function fetchComments() {
+    try {
+      if (!checkReview?._id) {
+        return;
+      }
+      setFetchCommentsLoader(true);
+      const getAllComments = await fetchWithRetry(() =>
+        axiosSecureInstance.get("/api/v1/shows/all-comments", {
+          params: {
+            review_id: checkReview?._id,
+          },
+        })
+      );
+      console.log("all-comments = ", getAllComments);
+      setAllComments(getAllComments.data.data);
+      setFetchCommentsLoader(false);
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function createComments(comment) {
+    if (!checkReview?._id) {
+      return;
+    }
+    setCreateCommentsLoader(true);
+    const createdComment = await fetchWithRetry(() =>
+      axiosSecureInstance.post("/api/v1/create/comments", {
+        review_id: checkReview._id,
+        user_id: localStorage.getItem("_id"),
+        comment,
+      })
+    );
+
+    if (createdComment.data.success) {
+      // setAllComments((prev) => [createdComment.data.data, ...prev]);
+
+      setAllComments((prev) => [
+        {
+          image: user.image,
+          name: user.name,
+          createdAt: new Date(Date.now()).toISOString(),
+          comment: comment,
+        },
+        ...prev,
+      ]);
+    }
+    setCreateCommentsLoader(false);
+  }
 
   useEffect(() => {
     if (loader) {
@@ -41,11 +111,32 @@ function ReviewDetails() {
     });
 
     if (!foundReview) {
-      setExcedID(true); // triggers 404 if not found
+      setExceedID(true); // triggers 404 if not found
     } else {
       setCheckReview(foundReview);
     }
   }, [id, loader]);
+
+  useEffect(() => {
+    if (exceedID) {
+      return;
+    }
+    fetchComments();
+  }, [checkReview?._id]);
+
+  async function handleCommentSubmit(e) {
+    e.preventDefault();
+
+    let checkComment = comment.trim();
+
+    if (checkComment === "") {
+      return;
+    }
+
+    createComments(checkComment);
+
+    setComment("");
+  }
 
   if (loader) {
     return (
@@ -55,7 +146,7 @@ function ReviewDetails() {
     );
   }
 
-  if (excedID) {
+  if (exceedID) {
     return <NoServiceFound />;
   }
 
@@ -101,21 +192,26 @@ function ReviewDetails() {
             <LiaCommentSolid />
           </span>
         </section>
-        <section className="_insert_comments_ w-full h-[7.5rem] flex justify-start items-center gap-4 mb-10 ">
-          <section className="__left_ h-full w-[60px] lg:w-[77px] overflow-hidden ">
-            <section className="border-3 border-slate-300 w-full  h-[75px] rounded-full overflow-hidden object-cover bg-cover shadow-lg bg-amber-600">
+        <section className="_insert_comments_ w-full h-[7.5rem] flex justify-start items-center gap-4 mb-0 ">
+          <section className="__left_ h-full w-[85px]  lg:w-[77px] overflow-hidden ">
+            <section className="border-3 border-slate-300 w-full h-[70px] lg:h-[75px] rounded-full overflow-hidden object-cover bg-cover shadow-lg bg-amber-600">
               <img
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bW9kZWx8ZW58MHx8MHx8fDA%3D"
+                src={`${user?.image}`}
                 alt=""
                 className="w-full h-full object-cover object-top bg-slate-600 "
               />
             </section>
           </section>
-          <section className="__right_ w-full  ">
+          <form onSubmit={handleCommentSubmit} className="__right_ w-full  ">
             <input
+              disabled={createCommentsLoader}
+              onChange={(e) => {
+                setComment(e.target.value);
+              }}
               onClick={() => {
                 setClickComment(true);
               }}
+              value={clickComment ? comment : ""}
               readOnly={!clickComment}
               placeholder="Add a comment..."
               type="text"
@@ -130,6 +226,8 @@ function ReviewDetails() {
                 {clickComment ? (
                   <>
                     <button
+                      disabled={createCommentsLoader}
+                      type="button"
                       onClick={() => {
                         setClickComment(false);
                       }}
@@ -137,8 +235,16 @@ function ReviewDetails() {
                     >
                       Cancel
                     </button>
-                    <button className="px-5 py-3 rounded-full bg-slate-950 text-white font-semibold shadow-md cursor-pointer border border-slate-100">
-                      Comment
+                    <button
+                      disabled={createCommentsLoader}
+                      type="submit"
+                      className="w-[110px] py-3 rounded-full bg-slate-950 text-white font-semibold shadow-md cursor-pointer border border-slate-100 flex items-center justify-center"
+                    >
+                      {createCommentsLoader ? (
+                        <span class="loading loading-spinner loading-md"></span>
+                      ) : (
+                        " Comment"
+                      )}
                     </button>
                   </>
                 ) : (
@@ -146,27 +252,25 @@ function ReviewDetails() {
                 )}
               </section>
             </section>
-          </section>
+          </form>
         </section>
-        {/* <hr className="w-full border-b-2" /> */}
+        <hr className="w-full border-b-2 border-dotted border-slate-950" />
         <section className="w-full flex flex-col items-start justify-start gap-4">
-          {[
-            {
-              image:
-                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bW9kZWx8ZW58MHx8MHx8fDA%3D",
-              name: "test",
-              time: "1/1/2002",
-              comment:
-                "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aut optio hic eum est expedita dolore provident dignissimos tempora sint voluptatum.",
-            },
-          ].map(({ image, name, time, comment }) => (
-            <ClientComment
-              image={image}
-              name={name}
-              time={time}
-              comment={comment}
-            />
-          ))}
+          {fetchCommentsLoader ? (
+            <section className="w-full flex items-center justify-center">
+              <span className="loading loading-spinner loading-xl scale-120"></span>
+            </section>
+          ) : (
+            allComments.map(({ image, name, createdAt, comment }, index) => (
+              <ClientComment
+                key={index}
+                image={image}
+                name={name}
+                createdAt={createdAt}
+                comment={comment}
+              />
+            ))
+          )}
         </section>
       </section>
     </div>
