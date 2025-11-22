@@ -1,11 +1,11 @@
 import React from "react";
 import { FaStar } from "react-icons/fa";
-function ClintComment({ image, name, rating, comment }) {
+function ClintComment({ image, name, time, comment }) {
   return (
     <div className="flex  justify-start gap-6 border-b w-full">
-      <section className="__img__ __left__ w-[60px] lg:w-[53px] h-[52px] rounded-full overflow-hidden shadow border-2 border-slate-400">
+      <section className="__img__ __left__ w-[60px] lg:w-[53px] h-[52px] rounded-full overflow-hidden shadow border-2 border-slate-400 object-cover bg-cover">
         <img
-          className="w-full h-full object-center bg-center"
+          className="w-full h-full object-cover object-top"
           src={image}
           alt=""
         />
@@ -14,7 +14,7 @@ function ClintComment({ image, name, rating, comment }) {
         <section className="__top__ gap-7 flex items-center justify-start mt-3 bg-white">
           <section className="__name__ font-semibold">{name}</section>
           <section className="__stars__ text-gray-500/80 flex items-center gap-1 text-[0.6rem]">
-            12/12/2006
+            {time}
           </section>
         </section>
         <section className="__bottom__ w-full py-3 pb-5">{comment}</section>
